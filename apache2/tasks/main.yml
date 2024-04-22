@@ -3,13 +3,13 @@
 - name: Install apache and python
   ansible.builtin.package:
     name:
-      - apache 2
+      - apache2
       - python
     state: latest
 
 - name: Write the apache config file
   ansible.builtin.copy:
-    src: "{{ ap2 }}"
+    src: '{{ ap2 }}'
     dest: /etc/apache2/apache2.conf
 
 - name: Give Ownership Permissions
@@ -21,7 +21,7 @@
 
 - name: Write the apache site file
   ansible.builtin.copy:
-    src: "{{ indx }}"
+    src: '{{ indx }}'
     dest: /var/www/html/index.html
 
 - name: Give Ownership Permissions
