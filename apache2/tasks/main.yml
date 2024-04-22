@@ -5,6 +5,9 @@
     name:
       - apache2
       - python
+      - php
+      - libapache2-mod-php
+      - php-mysql
     state: latest
 
 - name: Write the apache config file
@@ -28,6 +31,18 @@
   ansible.builtin.file:
     path: /var/www/html/index.html
     owner:  root
+    group: root
+    mode: '0644'
+
+- name: Write the index file for php
+  ansible.builtin.copy:
+    src: index.php
+    dest: /var/www/html/index.php
+
+- name: Give Ownership Permissions
+  ansible.builtin.file:
+    path: /var/www/html/index.php
+    owner: root
     group: root
     mode: '0644'
 
