@@ -54,7 +54,8 @@
 
 - name: Create MySQL database
   community.mysql.mysql_db:
-    name: "{{ mysql_database }}"
+    name: 
+      - "{{ mysql_database }}"
     state: present
 # TODO
 
@@ -70,8 +71,8 @@
 
 - name: Copy SQL file to remote host
   ansible.builtin.copy:
-    src: example.db
-    dest: example.db
+    src: example_db.sql
+    dest: example_db.sql
   when: ansible_facts['mysql_import_data'] == "True"
 # TODO - this should only be run if mysql_import_data is true
 
