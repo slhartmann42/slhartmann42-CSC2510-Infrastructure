@@ -29,16 +29,21 @@
     src: update.sh
     dest: /tmp/update.sh
 
+- name: Give script execute permissions
+  ansible.builtin.file:
+    path: /tmp/update.sh
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Execute the script
-  ansible.builtin.shell: update.sh "{{ mysql_root_password }}"
-  args:
-    chdir: /tmp/
+  ansible.builtin.shell:
+    /tmp/update.sh "{{ mysql_root_password }}"
   register: result
 
 - name: Output result from script
   ansible.builtin.debug:
     var: result
-    verbosity: 2
 # TODO
 
 - name: Clean up the script from the remote server
