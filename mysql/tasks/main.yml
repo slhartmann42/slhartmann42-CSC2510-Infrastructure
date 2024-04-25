@@ -37,13 +37,14 @@
     mode: '0755'
 
 - name: Execute the script
-  ansible.builtin.shell:
-    /tmp/update.sh "{{ mysql_root_password }}"
+  ansible.builtin.shell: /tmp/update.sh "{{ mysql_root_password }}"
   register: result
 
 - name: Output result from script
   ansible.builtin.debug:
     var: result
+  notify:
+    - Restart mysql
 # TODO
 
 - name: Clean up the script from the remote server
@@ -54,8 +55,9 @@
 
 - name: Create MySQL database
   community.mysql.mysql_db:
-    name: 
-      - "{{ mysql_database }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_database }}"
     state: present
 # TODO
 
@@ -72,15 +74,15 @@
 - name: Copy SQL file to remote host
   ansible.builtin.copy:
     src: example_db.sql
-    dest: example_db.sql
-  when: ansible_facts['mysql_import_data'] == "True"
+    dest: ~/example_db.sql
+  when: mysql_import_data
 # TODO - this should only be run if mysql_import_data is true
 
 - name: Import SQL data
   community.mysql.mysql_db:
     name: "{{ mysql_database}}"
     state: import
-    target: example.db
+    target: ~/example.db
 # TODO
 
 - name: Update MySQL bind-address and mysqlx-bind-address to allow external connections
