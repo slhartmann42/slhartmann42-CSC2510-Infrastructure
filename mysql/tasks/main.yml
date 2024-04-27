@@ -1,0 +1,101 @@
+---
+- name: Check for Python3 and pip in Debian Linux
+  apt:
+    name:
+      - python3
+      - python3-pip
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+# TODO: this task should only run if the OS is Debian based
+
+- name: Install PyMySQL
+  pip:
+    name: pymysql
+    executable: pip3
+
+- name: Install MySQL server
+  apt:
+    name: mysql-server
+    state: present
+
+- name: Start MySQL service
+  service:
+    name: mysql
+    state: started
+    enabled: true
+
+- name: Copy update script to the server
+  ansible.builtin.copy:
+    src: update.sh
+    dest: /tmp/update.sh
+
+- name: Give script execute permissions
+  ansible.builtin.file:
+    path: /tmp/update.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Execute the script
+  ansible.builtin.shell: /tmp/update.sh "{{ mysql_root_password }}"
+  register: result
+
+- name: Output result from script
+  ansible.builtin.debug:
+    msg: "{{ result.stdout_lines }}"
+# TODO
+
+- name: Clean up the script from the remote server
+  ansible.builtin.file:
+    path: /tmp/update.sh
+    state: absent
+# TODO
+
+- name: Create MySQL database
+  community.mysql.mysql_db:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_database }}"
+    state: present
+# TODO
+
+- name: Create MySQL user
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_password }}"
+    host: "%"
+    priv: "{{ mysql_database }}.*:ALL"
+    state: present
+
+- name: Copy SQL file to remote host
+  ansible.builtin.copy:
+    src: example_db.sql
+    dest: ~/example_db.sql
+  when: mysql_import_data
+# TODO - this should only be run if mysql_import_data is true
+
+- name: Import SQL data
+  community.mysql.mysql_db:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_database}}"
+    state: import
+    target: ~/example_db.sql
+  when: mysql_import_data
+# TODO
+
+- name: Update MySQL bind-address and mysqlx-bind-address to allow external connections
+  ansible.builtin.lineinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    regexp: "^{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^bind-address\s*=\s*127\.0\.0\.1', line: 'bind-address = 0.0.0.0' }
+    - { regexp: '6mysqlx-bind-address\s*=\s*127\.0\.0\.1', line: 'mysqlx-bind-address = 0.0.0.0' }
+  notify:
+   - Restart mysql
+# TODO - this can be done in a single task or broken into two tasks, one per line
+# Use notify to restart mysql once complete.

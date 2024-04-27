@@ -1,49 +1,15 @@
 ---
-- hosts: all
+- hosts: db
   become: yes
-  tasks:
-  - name: Update APT
-    ansible.builtin.apt:
-      update_cache: true
-
-  - name: Install apache and python
-    ansible.builtin.package:
-      name:
-        - apache2
-        - python
-      state: latest
-
-  - name: Write the apache config file
-    ansible.builtin.copy:
-      src: /home/samuelh343/slhartmann42-CSC2510-Infrastructure/files/config/apache2.conf
-      dest: /etc/apache2/apache2.conf
-
-  - name: Give ownership permissions
-    ansible.builtin.file:
-      path: /etc/apache2/apache2.conf
-      owner: root
-      group: root
-      mode: '0644'
-
-  - name: Write the apache site file
-    ansible.builtin.copy:
-      src: ./files/site/index.html
-      dest: /var/www/html/index.html
-
-  - name: Give ownership permissions
-    ansible.builtin.file:
-      path: /var/www/html/index.html
-      owner: root
-      group: root
-      mode: '0644' 
-
-  - name: Create a symbolic link
-    ansible.builtin.file:
-      src: /etc/apache2/mods-available/headers.load
-      dest: /etc/apache2/mods-enabled/headers.load
-      state: link
-
-  - name: Restart apache
-    ansible.builtin.service:
-      name: apache2
-      state: restarted
+  vars:
+    mysql_import_data: "yes"
+  roles:
+    - update_apt
+    - mysql
+- hosts: webservers
+  become: yes
+  vars:
+    mysql_import_data: "yes"
+  roles:
+    - update_apt
+    - apache2
