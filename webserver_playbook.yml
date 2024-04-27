@@ -1,9 +1,15 @@
 ---
-- hosts: all
+- hosts: db
+  become: yes
+  vars:
+    mysql_import_data: "yes"
+  roles:
+    - update_apt
+    - mysql
+- hosts: webservers
   become: yes
   vars:
     mysql_import_data: "yes"
   roles:
     - update_apt
     - apache2
-    - mysql

@@ -42,9 +42,7 @@
 
 - name: Output result from script
   ansible.builtin.debug:
-    var: result
-  notify:
-    - Restart mysql
+    msg: "{{ result.stdout_lines }}"
 # TODO
 
 - name: Clean up the script from the remote server
@@ -80,16 +78,23 @@
 
 - name: Import SQL data
   community.mysql.mysql_db:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
     name: "{{ mysql_database}}"
     state: import
-    target: ~/example.db
+    target: ~/example_db.sql
+  when: mysql_import_data
 # TODO
 
 - name: Update MySQL bind-address and mysqlx-bind-address to allow external connections
   ansible.builtin.lineinfile:
     path: /etc/mysql/mysql.conf.d/mysqld.cnf
-    regexp: 'bind-address ='
-    insertafter: "0.0.0.0"
+    regexp: "^{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^bind-address\s*=\s*127\.0\.0\.1', line: 'bind-address = 0.0.0.0' }
+    - { regexp: '6mysqlx-bind-address\s*=\s*127\.0\.0\.1', line: 'mysqlx-bind-address = 0.0.0.0' }
   notify:
    - Restart mysql
 # TODO - this can be done in a single task or broken into two tasks, one per line
